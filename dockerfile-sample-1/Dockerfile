@@ -49,6 +49,8 @@ EXPOSE 80 443
 # expose these ports on the docker virtual network
 # you still need to use -p or -P to open/forward these ports on host
 
+RUN mkdir /opt/suriya
+
 CMD ["nginx", "-g", "daemon off;"]
 # required: run this command when container is launched
 # only one CMD allowed, so if there are multiple, last one wins
