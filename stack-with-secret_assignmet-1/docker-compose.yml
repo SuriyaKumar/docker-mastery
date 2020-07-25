@@ -1,0 +1,73 @@
+## Docker-Mastery Stack with Secret
+## Author : SURIYAKUMAR RAJARJAN
+
+version: '3.8'
+
+services:
+  drupal:
+    image: suriyakumar/custom_drupal
+    ports:
+      - 8080:80
+    networks:
+      - frontend
+    volumes:
+      - drupal_modules:/var/www/html/modules
+      - drupal_profiles:/var/www/html/profiles
+      - drupal_sites:/var/www/html/sites
+      - drupal_themes:/var/www/html/themes
+    depends_on:
+      - pg_db
+    deploy:
+      labels: [APP = drupal]
+      placement:
+        constraints: [node.role == worker]
+      replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+
+  pg_db:
+    image: postgres:12.3-alpine
+    networks:
+      - backend
+    secrets:
+      - psql_user
+      - psql_password
+    environment: 
+      POSTGRES_DB: drupal 
+      POSTGRES_USER_FILE: /run/secrets/psql_user
+      POSTGRES_PASSWORD_FILE: /run/secrets/psql_password
+    volumes:
+      - drupal_db:/var/lib/postgresql/data 
+    deploy:
+      labels: [APP=pg_db]
+      placement:
+        constraints: [node.role == manager]
+      replicas: 1
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+      
+
+volumes: 
+ drupal_modules: 
+ drupal_sites: 
+ drupal_profiles: 
+ drupal_themes: 
+ drupal_db: 
+
+networks:
+  frontend:
+  backend:
+
+secrets:
+  psql_user:
+    external: true
+    name: psql_user
+  psql_password:
+    external: true
+    name: psql_password
